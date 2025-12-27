@@ -65,7 +65,8 @@ chmod +x deploy-openemr.sh
 
 The script will:
 - Create a new project called `openemr`
-- Deploy MariaDB database (5Gi storage)
+- Deploy Redis cache (1Gi storage)
+- Deploy MariaDB 11.8 database (5Gi storage)
 - Deploy OpenEMR application (10Gi storage)
 - Create a secure route with auto-generated URL
 - Generate random database passwords
@@ -112,6 +113,7 @@ oc get pods -n openemr
 # Should see:
 # NAME                       READY   STATUS    RESTARTS   AGE
 # mariadb-0                  1/1     Running   0          5m
+# redis-xxxxxxxxxx-xxxxx     1/1     Running   0          4m
 # openemr-xxxxxxxxxx-xxxxx   1/1     Running   0          3m
 
 # View OpenEMR logs
@@ -120,8 +122,14 @@ oc logs -f deployment/openemr -n openemr
 # View database logs
 oc logs -f statefulset/mariadb -n openemr
 
+# View Redis logs
+oc logs -f deployment/redis -n openemr
+
 # Get the route URL
 oc get route openemr -n openemr -o jsonpath='{.spec.host}'
+
+# Test Redis connection from OpenEMR pod
+oc exec -it deployment/openemr -n openemr -- php -r "var_dump(extension_loaded('redis'));"
 ```
 
 ## Common Issues
@@ -191,8 +199,9 @@ oc delete project openemr
 
 - **Projects expire** after 30 days of inactivity - you'll need to redeploy
 - **Single replica only** due to ReadWriteOnce storage limitation
-- **Storage limits**: 15Gi total (5Gi DB + 10Gi documents)
+- **Storage limits**: 16Gi total (5Gi DB + 10Gi documents + 1Gi Redis)
 - **No cluster-admin access**: Can only manage your own projects
+- **Redis for sessions**: Improves performance and enables future scaling
 
 ## What's Next?
 

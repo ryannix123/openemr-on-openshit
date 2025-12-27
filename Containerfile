@@ -123,8 +123,8 @@ max_execution_time = 300
 max_input_time = 300
 
 ; Session Configuration (Redis-backed for multi-pod deployments)
-session.save_handler = files
-session.save_path = "/tmp/sessions"
+session.save_handler = redis
+session.save_path = "tcp://redis:6379"
 session.gc_maxlifetime = 7200
 session.cookie_httponly = 1
 session.cookie_secure = 1

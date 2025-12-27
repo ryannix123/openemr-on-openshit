@@ -7,6 +7,8 @@ Production-ready deployment of OpenEMR 7.0.5 on Red Hat OpenShift Developer Sand
 This project provides a complete containerized deployment of OpenEMR (Open-source Electronic Medical Records) on Red Hat OpenShift Developer Sandbox. It includes:
 
 - **Custom OpenEMR Container**: Built on CentOS 9 Stream with Remi's PHP 8.4
+- **Redis Session Storage**: Redis 8 Alpine for improved performance and scalability
+- **MariaDB 11.8**: Latest Fedora MariaDB for robust database backend
 - **Developer Sandbox Ready**: Optimized for Developer Sandbox storage and resource constraints
 - **OpenShift Native**: Designed for OpenShift SCCs and security constraints
 - **Production Ready**: Includes health checks, resource limits, and monitoring
@@ -49,36 +51,36 @@ Whether you're a solo practitioner, a community health center, or a large health
         │  OpenEMR Pod       │
         │  (single replica)  │
         │  nginx + PHP-FPM   │
-        └─────────┬──────────┘
-                  │
-        ┌─────────▼──────────┐
-        │  Documents PVC     │
-        │  (RWO - 10Gi)      │
-        │  gp3 storage       │
-        └────────────────────┘
-                  │
-        ┌─────────▼──────────┐
-        │  MariaDB Service   │
-        │    Port 3306       │
-        └─────────┬──────────┘
-                  │
-        ┌─────────▼──────────┐
-        │  MariaDB StatefulSet│
-        │  (1 replica)       │
-        └─────────┬──────────┘
-                  │
-        ┌─────────▼──────────┐
-        │   Database PVC     │
-        │   (RWO - 5Gi)      │
-        │   gp3 storage      │
-        └────────────────────┘
+        └────┬───────────┬───┘
+             │           │
+    ┌────────▼───┐  ┌───▼──────────┐
+    │ Redis Svc  │  │ MariaDB Svc  │
+    │ Port 6379  │  │ Port 3306    │
+    └────┬───────┘  └───┬──────────┘
+         │              │
+    ┌────▼────────┐ ┌──▼───────────┐
+    │ Redis Pod   │ │ MariaDB      │
+    │ (sessions)  │ │ StatefulSet  │
+    └────┬────────┘ └──┬───────────┘
+         │             │
+    ┌────▼────────┐ ┌─▼────────────┐
+    │ Redis PVC   │ │ Database PVC │
+    │ (RWO - 1Gi) │ │ (RWO - 5Gi)  │
+    └─────────────┘ └──────────────┘
+         
+        ┌─────────────────┐
+        │  Documents PVC  │
+        │  (RWO - 10Gi)   │
+        │  gp3 storage    │
+        └─────────────────┘
 ```
 
 **Developer Sandbox Constraints:**
 - AWS EBS storage (gp3) provides ReadWriteOnce (RWO) volumes only
 - Single OpenEMR replica due to RWO storage limitation
 - Resource quotas: ~768Mi RAM and ~500m CPU per container
-- Total storage: 15Gi (5Gi database + 10Gi documents)
+- Total storage: 16Gi (5Gi database + 10Gi documents + 1Gi Redis)
+- Redis 8 Alpine for PHP session storage
 
 ## Components
 
@@ -87,21 +89,34 @@ Whether you're a solo practitioner, a community health center, or a large health
 - **PHP**: 8.4 (from Remi's repository)
 - **Web Server**: nginx + PHP-FPM (via supervisord)
 - **OpenEMR**: 7.0.5
+- **Session Storage**: Redis (tcp://redis:6379)
 - **Features**:
   - OpenShift SCC compliant (runs as arbitrary UID)
   - Health check endpoints
   - OPcache enabled for performance
   - All required PHP extensions
+  - Redis session handler for scalability
+
+### Redis Cache
+- **Image**: Redis 8 Alpine (docker.io/redis:8-alpine)
+- **Storage**: 1Gi RWO persistent volume (gp3)
+- **Purpose**: PHP session storage
+- **Configuration**: 
+  - maxmemory: 256MB with LRU eviction policy
+  - Persistence: AOF (Append Only File)
+  - Non-root execution (OpenShift restricted SCC)
 
 ### Database
-- **Image**: Red Hat MariaDB 10.11
+- **Image**: Fedora MariaDB 11.8 (quay.io/fedora/mariadb-118)
 - **Storage**: 5Gi RWO persistent volume (gp3)
 - **Credentials**: Auto-generated secure passwords
 
 ### Storage
 - **Documents**: 10Gi RWO volume (for patient documents, images) - gp3 EBS
 - **Database**: 5Gi RWO volume (for MariaDB data) - gp3 EBS
+- **Redis**: 1Gi RWO volume (for session persistence) - gp3 EBS
 - **Storage Class**: `gp3` (AWS EBS CSI driver, default in Developer Sandbox)
+- **Total**: 16Gi
 
 ## Prerequisites
 
@@ -211,10 +226,14 @@ Current resource allocations (optimized for Developer Sandbox):
 - Requests: 512Mi RAM, 200m CPU
 - Limits: 1Gi RAM, 500m CPU
 
+**Redis:**
+- Requests: 128Mi RAM, 100m CPU
+- Limits: 256Mi RAM, 250m CPU
+
 **Total Namespace Usage:**
-- RAM: ~896Mi requests, ~1.75Gi limits
-- CPU: ~400m requests, ~1000m limits
-- Storage: 15Gi (5Gi DB + 10Gi documents)
+- RAM: ~1Gi requests, ~2Gi limits
+- CPU: ~500m requests, ~1250m limits
+- Storage: 16Gi (5Gi DB + 10Gi documents + 1Gi Redis)
 
 These values fit within typical Developer Sandbox namespace quotas.
 
@@ -229,6 +248,10 @@ upload_max_filesize = 128M
 post_max_size = 128M
 memory_limit = 512M
 max_execution_time = 300
+
+# Session storage via Redis
+session.save_handler = redis
+session.save_path = "tcp://redis:6379"
 ```
 
 ### PHP Extensions
@@ -241,6 +264,11 @@ All required OpenEMR extensions are included:
 - php-zip (compression)
 - php-curl (HTTP requests)
 - php-opcache (performance)
+- php-ldap (LDAP authentication)
+- php-soap (web services)
+- php-imap (email)
+- php-sodium (encryption)
+- php-pecl-redis5 (session storage)
 - php-ldap (LDAP authentication)
 - php-soap (web services)
 - php-imap (email)

@@ -25,12 +25,14 @@ NC='\033[0m' # No Color
 # Configuration
 PROJECT_NAME="openemr"
 OPENEMR_IMAGE="quay.io/ryan_nix/openemr-openshift:7.0.5"
-MARIADB_IMAGE="registry.redhat.io/rhel9/mariadb-1011:latest"
+MARIADB_IMAGE="quay.io/fedora/mariadb-118:latest"
+REDIS_IMAGE="docker.io/redis:8-alpine"
 
 # Storage configuration for Developer Sandbox (AWS EBS - RWO only)
 STORAGE_CLASS="gp3"  # Default Developer Sandbox storage class
 DB_STORAGE_SIZE="5Gi"
 DOCUMENTS_STORAGE_SIZE="10Gi"
+REDIS_STORAGE_SIZE="1Gi"
 
 # Database configuration
 DB_NAME="openemr"
@@ -281,6 +283,167 @@ EOF
 }
 
 ##############################################################################
+# Redis Deployment
+##############################################################################
+
+deploy_redis() {
+    print_header "Deploying Redis Cache"
+    
+    # Create PVC for Redis (optional - can use emptyDir for ephemeral)
+    print_info "Creating persistent volume for Redis..."
+    cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data
+  namespace: $PROJECT_NAME
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: $REDIS_STORAGE_SIZE
+  storageClassName: $STORAGE_CLASS
+EOF
+    
+    print_success "Redis PVC created"
+    
+    # Create Redis configuration ConfigMap
+    print_info "Creating Redis configuration..."
+    cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: $PROJECT_NAME
+data:
+  redis.conf: |
+    # Redis configuration for OpenShift
+    bind 0.0.0.0
+    protected-mode no
+    port 6379
+    tcp-backlog 511
+    timeout 0
+    tcp-keepalive 300
+    
+    # Persistence
+    save 900 1
+    save 300 10
+    save 60 10000
+    
+    # Memory
+    maxmemory 256mb
+    maxmemory-policy allkeys-lru
+    
+    # Logging
+    loglevel notice
+    
+    # Append only file
+    appendonly yes
+    appendfsync everysec
+EOF
+    
+    print_success "Redis configuration created"
+    
+    # Deploy Redis Deployment
+    print_info "Deploying Redis..."
+    cat <<EOF | oc apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: $PROJECT_NAME
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      securityContext:
+        fsGroup: 0
+        runAsNonRoot: true
+      containers:
+      - name: redis
+        image: $REDIS_IMAGE
+        command:
+        - redis-server
+        - /usr/local/etc/redis/redis.conf
+        ports:
+        - containerPort: 6379
+          name: redis
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        - name: redis-config
+          mountPath: /usr/local/etc/redis
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            memory: 256Mi
+            cpu: 250m
+          requests:
+            memory: 128Mi
+            cpu: 100m
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+          seccompProfile:
+            type: RuntimeDefault
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: redis-data
+      - name: redis-config
+        configMap:
+          name: redis-config
+EOF
+    
+    print_success "Redis deployment created"
+    
+    # Create Redis Service
+    print_info "Creating Redis service..."
+    cat <<EOF | oc apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: $PROJECT_NAME
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+    name: redis
+  selector:
+    app: redis
+  type: ClusterIP
+EOF
+    
+    print_success "Redis service created"
+    
+    # Wait for Redis to be ready
+    wait_for_pod "app=redis" "$PROJECT_NAME" 300
+    print_success "Redis is ready"
+}
+
+##############################################################################
 # OpenEMR Deployment
 ##############################################################################
 
@@ -457,8 +620,10 @@ display_summary() {
     echo ""
     echo "Note: This deployment runs on Developer Sandbox with:"
     echo "  - Single replica (RWO storage limitation)"
-    echo "  - 5Gi database storage"
+    echo "  - 5Gi database storage (MariaDB 11.8)"
     echo "  - 10Gi document storage"
+    echo "  - 1Gi Redis cache storage"
+    echo "  - Redis session storage (tcp://redis:6379)"
     echo ""
     echo "Useful Commands:"
     echo "  View pods:        oc get pods -n $PROJECT_NAME"
@@ -501,6 +666,7 @@ main() {
     preflight_checks
     create_project
     deploy_mariadb
+    deploy_redis
     deploy_openemr
     display_summary
     
