@@ -1,6 +1,6 @@
 # OpenEMR on OpenShift Developer Sandbox
 
-Production-ready deployment of OpenEMR 7.0.5 on Red Hat OpenShift Developer Sandbox using a custom CentOS 9 Stream container with PHP 8.4 from Remi's repository.
+Production-ready deployment of OpenEMR 7.0.4 on Red Hat OpenShift Developer Sandbox using a custom CentOS 9 Stream container with PHP 8.4 from Remi's repository.
 
 ## Overview
 
@@ -88,7 +88,7 @@ Whether you're a solo practitioner, a community health center, or a large health
 - **Base**: CentOS 9 Stream
 - **PHP**: 8.4 (from Remi's repository)
 - **Web Server**: nginx + PHP-FPM (via supervisord)
-- **OpenEMR**: 7.0.5
+- **OpenEMR**: 7.0.4
 - **Session Storage**: Redis (tcp://redis:6379)
 - **Features**:
   - OpenShift SCC compliant (runs as arbitrary UID)
@@ -147,14 +147,14 @@ If you want to build your own container:
 
 ```bash
 # Build the container
-podman build -t quay.io/ryan_nix/openemr-openshift:7.0.5 .
+podman build -t quay.io/ryan_nix/openemr-openshift:7.0.4 .
 
 # Push to Quay.io
 podman login quay.io
-podman push quay.io/ryan_nix/openemr-openshift:7.0.5
+podman push quay.io/ryan_nix/openemr-openshift:7.0.4
 ```
 
-Or use the pre-built image: `quay.io/ryan_nix/openemr-openshift:7.0.5`
+Or use the pre-built image: `quay.io/ryan_nix/openemr-openshift:7.0.4`
 
 ### 3. Configure the Deployment (Optional)
 

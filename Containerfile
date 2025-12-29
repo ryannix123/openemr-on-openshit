@@ -8,21 +8,20 @@
 FROM quay.io/centos/centos:stream9 AS builder
 
 # OpenEMR version
-ARG OPENEMR_VERSION=7.0.5
+ARG OPENEMR_VERSION=7.0.4
 
-# Install download tools
+# Install download tools (curl-minimal already in base image)
 RUN dnf install -y \
-    curl \
     tar \
     gzip \
     && dnf clean all
 
-# Download OpenEMR source
+# Download OpenEMR source (note: tags use underscores, not periods)
 WORKDIR /tmp
-RUN curl -fsSL "https://github.com/openemr/openemr/archive/refs/tags/v${OPENEMR_VERSION}.tar.gz" \
+RUN curl -fsSL "https://github.com/openemr/openemr/archive/refs/tags/v7_0_4.tar.gz" \
     -o openemr.tar.gz \
     && tar -xzf openemr.tar.gz \
-    && mv "openemr-${OPENEMR_VERSION}" openemr \
+    && mv "openemr-7_0_4" openemr \
     && rm openemr.tar.gz
 
 # Remove unnecessary files to reduce image size
@@ -37,12 +36,12 @@ FROM quay.io/centos/centos:stream9
 
 LABEL maintainer="Ryan Nix <ryan_nix>" \
       description="OpenEMR on CentOS 9 Stream - OpenShift Ready" \
-      version="7.0.5" \
+      version="7.0.4" \
       io.k8s.description="OpenEMR Electronic Medical Records System" \
       io.openshift.tags="openemr,healthcare,php,medical"
 
 # Environment variables
-ENV OPENEMR_VERSION=7.0.5 \
+ENV OPENEMR_VERSION=7.0.4 \
     OPENEMR_WEB_ROOT=/var/www/html/openemr \
     PHP_FPM_PORT=9000 \
     NGINX_PORT=8080 \
@@ -321,7 +320,6 @@ RUN mkdir -p /var/log/supervisor
 RUN cat > /etc/supervisord.conf <<'EOF'
 [supervisord]
 nodaemon=true
-user=root
 logfile=/dev/stdout
 logfile_maxbytes=0
 loglevel=info
