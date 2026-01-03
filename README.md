@@ -304,6 +304,22 @@ oc exec deployment/openemr -- grep "config = " /var/www/html/openemr/sites/defau
 # Should show: $config = 1
 ```
 
+### Waking Up Your Deployment
+
+When you return after the sandbox has hibernated, your pods will be scaled down. Run this command to bring everything back up:
+
+```bash
+# Scale all deployments back to 1 replica
+oc scale deployment --all --replicas=1
+
+# Or specify your namespace explicitly
+oc scale deployment --all --replicas=1 -n $(oc project -q)
+```
+
+Your data persists in the PVCs — only the pods are stopped during hibernation.
+
+---
+
 ## Developer Sandbox Limitations
 
 The free Developer Sandbox has some constraints:
