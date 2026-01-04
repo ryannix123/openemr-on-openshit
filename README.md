@@ -356,4 +356,4 @@ OpenEMR itself is licensed under [GPL-3.0](https://github.com/openemr/openemr/bl
 
 ---
 
-**Note:** This project containerized OpenEMR for OpenShift in 2025. Pull requests for this deployment are welcome!
+**Note:** This project containerized OpenEMR for OpenShift in 2026. Pull requests for this deployment are welcome!
