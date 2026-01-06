@@ -196,11 +196,11 @@ EOF
     
     print_success "Database PVC created"
     
-    # Deploy MariaDB StatefulSet
-    print_info "Deploying MariaDB StatefulSet..."
+    # Deploy MariaDB Deployment
+    print_info "Deploying MariaDB..."
     cat <<EOF | oc apply -f -
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: mariadb
   labels:
@@ -212,7 +212,6 @@ metadata:
     app.kubernetes.io/version: "11.8"
     app.kubernetes.io/managed-by: kubectl
 spec:
-  serviceName: mariadb
   replicas: 1
   selector:
     matchLabels:
@@ -283,7 +282,7 @@ spec:
           claimName: mariadb-data
 EOF
     
-    print_success "MariaDB StatefulSet created"
+    print_success "MariaDB deployment created"
     
     # Create MariaDB Service
     print_info "Creating MariaDB service..."
@@ -675,7 +674,7 @@ display_summary() {
     echo "Useful Commands:"
     echo "  View pods:        oc get pods"
     echo "  View logs:        oc logs -f deployment/openemr"
-    echo "  View database:    oc logs -f statefulset/mariadb"
+    echo "  View database:    oc logs -f deployment/mariadb"
     echo "  Restart OpenEMR:  oc rollout restart deployment/openemr"
     echo ""
     
@@ -723,7 +722,7 @@ cleanup() {
     print_info "Cleaning up OpenEMR deployment..."
     
     oc delete deployment openemr redis --ignore-not-found
-    oc delete statefulset mariadb --ignore-not-found
+    oc delete deployment mariadb --ignore-not-found
     oc delete service openemr redis mariadb --ignore-not-found
     oc delete route openemr --ignore-not-found
     oc delete secret openemr-secret mariadb-secret --ignore-not-found

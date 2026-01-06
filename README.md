@@ -10,11 +10,13 @@ This project provides a production-ready container image and deployment script f
 
 **Stack:**
 - **OpenEMR 7.0.4** - Electronic Health Records system
-- **CentOS 9 Stream** - Base container image
+- **CentOS 9 Stream*** - Base container image
 - **PHP 8.4** - Via Remi repository
 - **nginx + PHP-FPM** - Web server (supervisord managed)
 - **MariaDB 11.8** - Database
 - **Redis 8** - Session caching
+
+*\*CentOS Stream 9 is the upstream development branch for RHEL 9.x (Fedora → CentOS Stream → RHEL). It provides a stable, enterprise-grade foundation with the latest updates before they land in RHEL.*
 
 ## Benefits of Running on OpenShift
 
@@ -244,7 +246,7 @@ RUN chgrp -R 0 /var/www/html && chmod -R g=u /var/www/html
 | PVC | Size | Purpose |
 |-----|------|---------|
 | `mariadb-data` | 5Gi | Database files |
-| `openemr-documents` | 10Gi | Patient documents, logs, configs |
+| `openemr-sites` | 10Gi | Site configuration, patient documents, logs |
 
 ### Resource Limits
 
@@ -253,6 +255,23 @@ RUN chgrp -R 0 /var/www/html && chmod -R g=u /var/www/html
 | OpenEMR | 200m | 500m | 384Mi | 768Mi |
 | MariaDB | 200m | 500m | 512Mi | 1Gi |
 | Redis | 100m | 200m | 128Mi | 256Mi |
+
+### IP Whitelisting
+
+To restrict access to OpenEMR to specific IP addresses, annotate the route:
+
+```bash
+# Allow only specific IPs (comma-separated CIDR notation)
+oc annotate route openemr haproxy.router.openshift.io/ip_whitelist="192.168.1.0/24,10.0.0.1" --overwrite
+
+# Allow a single IP
+oc annotate route openemr haproxy.router.openshift.io/ip_whitelist="203.0.113.42" --overwrite
+
+# Remove IP restrictions
+oc annotate route openemr haproxy.router.openshift.io/ip_whitelist- --overwrite
+```
+
+This is recommended for healthcare applications to limit access to known networks.
 
 ## Troubleshooting
 
@@ -268,7 +287,7 @@ oc describe pod <pod-name>
 oc logs deployment/openemr
 
 # Database logs
-oc logs statefulset/mariadb
+oc logs deployment/mariadb
 
 # Follow logs in real-time
 oc logs -f deployment/openemr
@@ -306,11 +325,24 @@ oc exec deployment/openemr -- grep "config = " /var/www/html/openemr/sites/defau
 
 ## Developer Sandbox Limitations
 
-The free Developer Sandbox has some constraints:
+The free [Developer Sandbox](https://developers.redhat.com/developer-sandbox) is based on [Red Hat OpenShift 4.20](https://docs.openshift.com/container-platform/4.20/welcome/index.html) / [Kubernetes 1.33.5](https://github.com/kubernetes/kubernetes/releases/tag/v1.33.5). **The Sandbox is for testing and development only - not for production workloads.**
+
+The Sandbox has some constraints:
 - **Storage:** RWO (ReadWriteOnce) only - single replica deployments
 - **Resources:** Limited CPU and memory quotas
 - **Duration:** 30-day sandbox, renewable
 - **Idle timeout:** Pods sleep after 12 hours of inactivity
+
+### Waking Up After Hibernation
+
+When you return after the sandbox has hibernated (scaled pods to 0), bring everything back up with:
+
+```bash
+# Scale all deployments back to 1 replica
+oc scale deployment --all --replicas=1
+```
+
+Your data persists in the PVCs - only the pods are stopped during hibernation.
 
 ### Checking Your Quotas
 
@@ -358,9 +390,9 @@ OpenEMR itself is licensed under [GPL-3.0](https://github.com/openemr/openemr/bl
 ## Acknowledgments
 
 - [OpenEMR Project](https://www.open-emr.org/) - The open-source EHR community
-- [Red Hat](https://sandbox.redhat.com/) - OpenShift Developer Sandbox
-- [Claude] (https://claude.ai) Opus 4.5 (Anthropic) - AI-assisted debugging and documentation
+- [Red Hat](https://www.redhat.com/) - OpenShift platform
+- Claude (Anthropic) - AI-assisted debugging and documentation
 
 ---
 
-**Note:** This project containerized OpenEMR 7.0.4 for OpenShift 4.20 in 2026. I made a similiar project for my Master's thesis in 2020 targeting OpenEMR 5.x on OpenShift 3.11 - what took me months then now takes hours with modern tooling and AI assistance!
+**Note:** This project containerized OpenEMR for OpenShift in 2025. A similar effort was the author's Master's thesis in 2020 targeting OpenShift 3.11 - what took months then now takes hours with modern tooling and AI assistance!
