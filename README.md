@@ -383,16 +383,14 @@ Contributions welcome! Please open issues or pull requests for:
 
 ## License
 
-This deployment configuration is provided under the MIT License.
-
-OpenEMR itself is licensed under [GPL-3.0](https://github.com/openemr/openemr/blob/master/LICENSE).
+OpenEMR is licensed under [GPL-3.0](https://github.com/openemr/openemr/blob/master/LICENSE).
 
 ## Acknowledgments
 
 - [OpenEMR Project](https://www.open-emr.org/) - The open-source EHR community
 - [Red Hat](https://www.redhat.com/) - OpenShift platform
-- Claude (Anthropic) - AI-assisted debugging and documentation
+- Claude Opus 4.5 (Anthropic) - AI-assisted debugging and documentation
 
 ---
 
-**Note:** This project containerized OpenEMR for OpenShift in 2025. A similar effort was the author's Master's thesis in 2020 targeting OpenShift 3.11 - what took months then now takes hours with modern tooling and AI assistance!
+**Note:** This project containerized OpenEMR for OpenShift in 2026. In 2020, I containerized OpenEMR for my Master's in Medical Informatics thesis targeting OpenShift 3.11 - what took months then now takes hours with modern tooling and AI assistance!
