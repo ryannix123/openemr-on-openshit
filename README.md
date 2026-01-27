@@ -6,6 +6,8 @@
 [![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)](https://www.php.net)
 [![HIPAA](https://img.shields.io/badge/HIPAA-Capable-green)](https://www.hhs.gov/hipaa/index.html)
 [![ONC Certified](https://img.shields.io/badge/ONC-Certified-success)](https://www.healthit.gov/topic/certification-ehrs/about-onc-health-it-certification-program)
+[![CentOS](https://img.shields.io/badge/CentOS-Stream%209-purple?logo=centos&logoColor=white)](https://www.centos.org)
+[![Quay.io](https://img.shields.io/badge/Quay.io-Container-red?logo=redhat&logoColor=white)](https://quay.io)
 [![Build and Push OpenEMR](https://github.com/ryannix123/openemr-on-openshift/actions/workflows/build-image.yml/badge.svg)](https://github.com/ryannix123/openemr-on-openshift/actions/workflows/build-image.yml)
 
 Deploy [OpenEMR](https://www.open-emr.org/) 7.0.4 - the most popular open-source Electronic Health Records (EHR) system - on [Red Hat OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift), the world's leading enterprise Kubernetes platform.
