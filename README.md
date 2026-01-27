@@ -1,3 +1,4 @@
+[![Build and Push OpenEMR](https://github.com/ryannix123/openemr-on-openshift/actions/workflows/build-image.yml/badge.svg)](https://github.com/ryannix123/openemr-on-openshift/actions/workflows/build-image.yml)
 # OpenEMR on OpenShift
 
 Deploy [OpenEMR](https://www.open-emr.org/) 7.0.4 - the most popular open-source Electronic Health Records (EHR) system - on [Red Hat OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift), the world's leading enterprise Kubernetes platform.
