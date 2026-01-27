@@ -1,10 +1,11 @@
 # OpenEMR on OpenShift
 [![OpenShift](https://img.shields.io/badge/OpenShift-4.x-red?logo=redhatopenshift)](https://www.redhat.com/en/technologies/cloud-computing/openshift)
-[![SuiteCRM](https://img.shields.io/badge/SuiteCRM-8.x-blue?logo=salesforce)](https://suitecrm.com)
+[![OpenEMR](https://img.shields.io/badge/OpenEMR-7.0-blue?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0xIDE3aC0ydi02SDV2LTJoNlY1aDJ2NmgzdjJoLTN2NnoiLz48L3N2Zz4=)](https://www.open-emr.org)
 [![SCC](https://img.shields.io/badge/SCC-restricted-brightgreen)](https://docs.openshift.com/container-platform/latest/authentication/managing-security-context-constraints.html)
 [![MariaDB](https://img.shields.io/badge/MariaDB-11-blue?logo=mariadb)](https://mariadb.org)
 [![PHP](https://img.shields.io/badge/PHP-8.x-777BB4?logo=php&logoColor=white)](https://www.php.net)
-[![Build and Push OpenEMR](https://github.com/ryannix123/openemr-on-openshift/actions/workflows/build-image.yml/badge.svg)](https://github.com/ryannix123/openemr-on-openshift/actions/workflows/build-image.yml)
+[![HIPAA](https://img.shields.io/badge/HIPAA-Capable-green)](https://www.hhs.gov/hipaa/index.html)
+[![ONC Certified](https://img.shields.io/badge/ONC-Certified-success)](https://www.healthit.gov/topic/certification-ehrs/about-onc-health-it-certification-program)
 
 Deploy [OpenEMR](https://www.open-emr.org/) 7.0.4 - the most popular open-source Electronic Health Records (EHR) system - on [Red Hat OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift), the world's leading enterprise Kubernetes platform.
 
